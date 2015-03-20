@@ -1,0 +1,1 @@
+python UIOptimizePNGModify.py -r "e:\WorkSpace\gunsoul_mobile\game\project\game-xx" -d "e:\WorkSpace\gunsoul_mobile\game\project\game-xx\Assets\resourcex\retain\textures"

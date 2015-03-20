@@ -1,0 +1,1 @@
+python csprojGenerate.py -d "E:\WorkSpace\gunsoul_mobile\game\project" -srcproj "game-xx" -dstproj "game-xx-logic"

@@ -1,0 +1,1 @@
+pyinstaller csprojGenerate.py

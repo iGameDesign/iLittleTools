@@ -1,0 +1,1 @@
+python buildAssetBundle.py -d "E:\workspace\gunsoul_mobile\game\project\game-xx" -p ios -t 1
