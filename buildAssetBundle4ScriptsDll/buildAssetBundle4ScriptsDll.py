@@ -33,7 +33,7 @@ g_LogFile           = r"logs\buildAssetBundle4ScriptsDll.log"
 g_updatefilename    = "update.ini"
 g_resourcemetatable = "resources.metatable"
 g_platform          = "android"
-g_version           = "0.1.%s"
+g_version           = "0.0.%s"
 g_ResourceType      = 14 #bytes
 g_smbAddress        = r"\\gscdn.funova.com\update"
 

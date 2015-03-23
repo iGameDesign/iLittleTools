@@ -9,9 +9,14 @@ Date            : 2014-12-25 11:11
 Comment         : 
 ModifyHistory   :
 Description     : 
-	1. Generate 
-	2. Copy zip file to update server
-	3. Unzip
+	1. mount_smbfs //gscdn.funova.com/update /mnt_update
+	2. Generate the version number
+	3. Copy zip file to update server
+	4. Unzip to the right folder with right version
+
+	source: ${GameXDirAndroidm}/Assets/StreamingAssets
+	target: /mnt_update/android/assets/0.0.1
+			/mnt_update/android/update.ini
 
 '''
 
@@ -26,19 +31,28 @@ import md5, hashlib
 from ftplib import FTP
 
 g_TestSuite         = r"buildUpdatePackage4Release"
-g_RootPath          = r"E:\workspace\gunsoul_mobile\game\project\game-xx"
-g_ScriptsDllPath    = r"Assets\resourcex\gamelogic"
+g_RootPath          = r"E:\workspace\gunsoul_mobile\game\project"
 
 g_LogFile           = r"logs\buildUpdatePackage4Release.log"
 
-g_updatefilename    = "update.ini"
-g_resourcemetatable = "resources.metatable"
-g_platform          = "android"
-g_version           = "0.1.%s"
-g_ResourceType      = 14 #bytes
-g_smbAddress        = r"\\gscdn.funova.com\update"
+g_version           = "0.0.%s"
 
-def FindFiles(dir, out, filter):
+# resource 
+g_ResourcePath		= "game-xx\Assets\StreamingAssets"
+g_resourcemetatable = "resources.metatable"
+
+# version for update server
+g_smbAddress        = r"\\gscdn.funova.com\update"
+g_platform          = "android"
+g_updatefilename    = "update.ini"
+
+# version for client
+g_ConfigsPath		= "game-xx\Assets\resourcex\configs"
+g_ClientConfig		= "GameConfig.cfg"
+g_ClientVersion		= "version.cfg"
+
+
+def FindFiles(dir, out, filter = []):
     if not os.path.exists(dir):
         print "path not exists."
         return
@@ -48,7 +62,7 @@ def FindFiles(dir, out, filter):
         if os.path.isfile(filename):
             ext = os.path.splitext(filename)[1]
             # print ext
-            if ext.lower() in filter or ext == '':
+            if filter == [] or(filter and ext.lower() in filter) or ext == '':
                 # print filename
                 out.append(filename)
         elif os.path.isdir(filename):
@@ -83,10 +97,10 @@ def ftp_upload(filename):
     print "ftp up OK"
 
 def smb_upload(filename, smb_address):
-    path, name = os.path.split(filename)
+	path, name = os.path.split(filename)
 
-    open(smb_address + "\\" + name, 'wb').write(open(filename, 'rb').read())
-    print "smb upload OK"
+	open(smb_address + "\\" + name, 'wb').write(open(filename, 'rb').read())
+	print "smb upload OK"
 
 #'''
 if __name__ == "__main__":
@@ -95,53 +109,20 @@ if __name__ == "__main__":
     startTime = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-d') # tab file dir
+    parser.add_argument('-s') # source file dir
+    parser.add_argument('-d') # destination file dir
     parser.add_argument('-p') # platform
 
     parser.print_help()
     args = parser.parse_known_args()[0]
 
     if args.d:
-        g_RootPath      = args.d
+    	g_RootPath		= args.s
+        g_smbAddress	= args.d
         g_platform      = args.p
-        print g_RootPath
+        print g_RootPath, g_smbAddress, g_platform
 
-        postfix1 = ".assetbundle"
-        dlls = []
         upfiles = []
-
-        ScriptsDllFileName = g_RootPath + '\\' + g_ScriptsDllPath + '\\' + g_ScriptsDllFile
-
-        # rename
-        # content = open(ScriptsDllFileName).read()
-        # open(ScriptsDllFileName + '.assetbundle', 'w').write(content)
-        # os.rename(ScriptsDllFileName, ScriptsDllFileName + '.assetbundle')
-        dlls.append(ScriptsDllFileName)
-
-        metadatas = []
-        for file in dlls:
-            print file
-            tfilename = 'gamelogic' + '_' + os.path.split(file)[1] #[:-len(postfix1)]
-            print tfilename
-            f = open(file, 'rb')
-            m = hashlib.md5()
-            m.update(f.read())
-            f.close()
-            md5 = m.hexdigest()
-            fsize = os.path.getsize(file)
-            metadata = "%s|%s|%s|%s|" % (tfilename, g_ResourceType, md5.upper(), fsize)
-            # print metadata
-            metadatas.append(metadata)
-
-            out = os.path.split(file)[0] + '\\' + 'gamelogic' + '_' + os.path.split(file)[1] + '.assetbundle'
-            open(out, 'wb').write(open(file, 'rb').read())
-            upfiles.append(out)
-
-        outstring = g_platform + ";" + ";".join(metadatas)
-        # print outstring
-        open(g_RootPath + '\\' + g_ScriptsDllPath + "\\" + g_resourcemetatable, "w").write(outstring)
-
-        upfiles.append(g_RootPath + '\\' + g_ScriptsDllPath + "\\" + g_resourcemetatable)
 
         # 获取子版本号
         path = g_smbAddress + "\\" + g_platform + "\\" + g_updatefilename
@@ -165,17 +146,17 @@ if __name__ == "__main__":
         f.close()
 
         # 上传ftp
-        # files = []
-        # files = FindFiles(g_RootPath + '\\' + g_ScriptsDllPath, files, [".assetbundle", ".metatable"])
+        upfiles = FindFiles(g_RootPath + '\\' + g_ResourcePath, upfiles, [])
+        path = g_smbAddress + "\\" + g_platform + "\\assets\\" + g_version
+        print path
+        print len(upfiles)
         for file in upfiles:
             # ftp_upload(file)
             print file
-            path = g_smbAddress + "\\" + g_platform + "\\assets\\" + g_version
-            print path
             if not os.path.exists(path):
                 os.mkdir(path)
                 pass
-            smb_upload(file, g_smbAddress + "\\" + g_platform + "\\assets\\" + g_version)
+            smb_upload(file, path)
     else:
         print "path is None."
     

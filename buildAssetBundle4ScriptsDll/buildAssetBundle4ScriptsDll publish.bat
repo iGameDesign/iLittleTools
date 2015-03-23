@@ -1,0 +1,1 @@
+pyinstaller buildAssetBundle4ScriptsDll.py

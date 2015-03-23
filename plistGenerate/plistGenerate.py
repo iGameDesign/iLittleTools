@@ -363,6 +363,74 @@ if __name__ == "__main__":
             fileobj.close()
             pass
 
+        files = []
+        # create plist
+        files = FindFiles(g_workDir + "/package/Manualbuild", files, [".ipa"])
+        if files and len(files) > 0:
+            for f in files:
+                print f
+                pfile = f[:len(f)-len(".ipa")] + keys_postfix
+                # print(pfile)
+                if not os.path.exists(pfile):
+                    # http://macbuild.funova.com/test/Bulletgirls.ipa
+                    print f
+                    print pfile
+                    url = "http://macbuild.funova.com" + f[len(g_workDir):]
+                    print url
+                    regx = "http://macbuild.funova.com/test/Bulletgirls.ipa"
+                    xml = re.sub(regx, url, g_plistTemp)
+                    # print xml
+                    fileobj = file(pfile, "w")
+                    fileobj.writelines(xml)
+                    fileobj.close()
+                    pass
+                else:
+                    print("The plist is exists.")
+        # create index.htm
+        files = []
+        files = FindFiles(g_workDir + "/package/Manualbuild", files, [".plist", ".apk"])
+        if files and len(files) > 0:
+            for f in files:
+                # print f
+                repl = ""
+                p, e = os.path.splitext(f)
+                if e == ".apk":
+                    repl = g_linkAndroid % ("http://macbuild.funova.com" + f[len(g_workDir):])
+                elif e == ".plist":
+                    repl = g_linkIOS % ("https://macbuild.funova.com" + f[len(g_workDir):])
+                else:
+                    print("This file is no need process: " + f)
+                    continue
+                p, n = os.path.split(f)
+                hfile = p + "/index.htm"
+                # print(hfile)
+                if not os.path.exists(hfile):
+                    # print(repl)
+                    regx2 = re.compile("<replace/>")
+                    htm = re.sub(regx2, repl, g_pinstallTemp, 1)
+                    # print htm
+                    fileobj = file(hfile, "w")
+                    fileobj.writelines(htm)
+                    fileobj.close()
+                    pass
+                else:
+                    # print(repl)
+                    regx1 = re.compile(repl)
+                    fileobj = file(hfile, "r")
+                    content = fileobj.read()
+                    fileobj.close()
+                    result1 = re.findall(regx1, content)
+                    if not result1 or len(result1) <= 0:
+                        regx2 = re.compile("<replace/>")
+                        htm = re.sub(regx2, repl, content, 1)
+                        # print htm
+                        fileobj = file(hfile, "w")
+                        fileobj.writelines(htm)
+                        fileobj.close()
+                        pass
+                    else:
+                        print("The download link is exists.")
+
     else:
         print "path is None."
     
