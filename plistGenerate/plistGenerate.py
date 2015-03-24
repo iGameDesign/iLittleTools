@@ -393,11 +393,13 @@ if __name__ == "__main__":
             for f in files:
                 # print f
                 repl = ""
+                bIOS = False
                 p, e = os.path.splitext(f)
                 if e == ".apk":
                     repl = g_linkAndroid % ("http://macbuild.funova.com" + f[len(g_workDir):])
                 elif e == ".plist":
                     repl = g_linkIOS % ("https://macbuild.funova.com" + f[len(g_workDir):])
+                    bIOS = True
                 else:
                     print("This file is no need process: " + f)
                     continue
@@ -406,7 +408,11 @@ if __name__ == "__main__":
                 # print(hfile)
                 if not os.path.exists(hfile):
                     # print(repl)
-                    regx2 = re.compile("<replace/>")
+                    xx = "<replace_Android/>"
+                    if bIOS:
+                        xx = "<replace_IOS/>"
+                        pass
+                    regx2 = re.compile(xx)
                     htm = re.sub(regx2, repl, g_pinstallTemp, 1)
                     # print htm
                     fileobj = file(hfile, "w")
@@ -421,7 +427,11 @@ if __name__ == "__main__":
                     fileobj.close()
                     result1 = re.findall(regx1, content)
                     if not result1 or len(result1) <= 0:
-                        regx2 = re.compile("<replace/>")
+                        xx = "<replace_Android/>"
+                        if bIOS:
+                            xx = "<replace_IOS/>"
+                            pass
+                        regx2 = re.compile(xx)
                         htm = re.sub(regx2, repl, content, 1)
                         # print htm
                         fileobj = file(hfile, "w")

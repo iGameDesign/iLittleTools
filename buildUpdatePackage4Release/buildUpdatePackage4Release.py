@@ -29,25 +29,26 @@ import re
 import argparse
 import md5, hashlib
 from ftplib import FTP
+import subprocess
 
 g_TestSuite         = r"buildUpdatePackage4Release"
-g_RootPath          = r"E:\workspace\gunsoul_mobile\game\project"
+g_RootPath          = r"E:\workspace\gunsoul_mobile\game\project\game-xx"
 
 g_LogFile           = r"logs\buildUpdatePackage4Release.log"
 
 g_version           = "0.0.%s"
 
 # resource 
-g_ResourcePath		= "game-xx\Assets\StreamingAssets"
+g_ResourcePath		= r"Assets/StreamingAssets"
 g_resourcemetatable = "resources.metatable"
 
 # version for update server
 g_smbAddress        = r"\\gscdn.funova.com\update"
-g_platform          = "android"
+g_platform          = "android2"
 g_updatefilename    = "update.ini"
 
 # version for client
-g_ConfigsPath		= "game-xx\Assets\resourcex\configs"
+g_ConfigsPath		= r"Assets/resourcex/configs"
 g_ClientConfig		= "GameConfig.cfg"
 g_ClientVersion		= "version.cfg"
 
@@ -99,8 +100,28 @@ def ftp_upload(filename):
 def smb_upload(filename, smb_address):
 	path, name = os.path.split(filename)
 
-	open(smb_address + "\\" + name, 'wb').write(open(filename, 'rb').read())
-	print "smb upload OK"
+	open(smb_address + "/" + name, 'wb').write(open(filename, 'rb').read())
+	# print "smb upload OK"
+
+def doCMD(arg):
+	'''
+	Run a shell command.
+	'''
+	print "==>", arg
+	cmd = subprocess.Popen(arg, shell = True, stdout = subprocess.PIPE)
+	temp = cmd.communicate()
+	# print temp
+	temp = temp[0]
+	regx = re.compile(r": (\d+)")
+	results = re.findall(regx, temp)
+	if len(results) > 2:
+		return results[1]
+	else:
+		return Null
+	pass
+
+def GetVersion():
+	return doCMD("svn info %s" % (g_RootPath))
 
 #'''
 if __name__ == "__main__":
@@ -121,42 +142,76 @@ if __name__ == "__main__":
         g_smbAddress	= args.d
         g_platform      = args.p
         print g_RootPath, g_smbAddress, g_platform
+        # g_platform		= "android2"
 
         upfiles = []
 
         # 获取子版本号
-        path = g_smbAddress + "\\" + g_platform + "\\" + g_updatefilename
+        subversion = GetVersion()
+        g_version = g_version % subversion
+        print g_version
+
+        # 修改update上的版本号
+        path = g_smbAddress + "/" + g_platform + "/" + g_updatefilename
         f = open(path, 'r')
         content = f.read()
-        print content
+        # print content
         f.close()
         regx = re.compile(r"index=(\d+)")
-        results = re.findall(regx, content)
-        print results[0]
-
-        # 修改子版本号
         regx2 = re.compile(r"upVer=(.+)")
-        subversion = (int(results[0]) + 1)
-        g_version = g_version % subversion
+        # results = re.findall(regx, content)
+        # print results[0]
+        # subversion = (int(results[0]) + 1)
+        # g_version = g_version % subversion
         content = re.sub(regx2, r"upVer=%s" % g_version, content)
         content = re.sub(regx, r"index=%s" % subversion, content)
-        print content
+        # print content
         f = open(path, 'w')
         f.write(content)
         f.close()
 
+        # 修改客户端的版本号
+        path_1 = g_RootPath + '/' + g_ConfigsPath + '/' + g_ClientConfig
+        path_2 = g_RootPath + '/' + g_ConfigsPath + '/' + g_ClientVersion
+        regx_1 = re.compile(r"BUILDVERSION=(.+)")
+        regx_2 = re.compile("\"svnVersion\":\"(.+)\"")
+
+        f = open(path_1, 'r')
+        content = f.read()
+        f.close()
+        content = re.sub(regx_1, r"BUILDVERSION=%s" % g_version, content)
+        # print path_1
+        f = open(path_1, 'w')
+        f.write(content)
+        f.close()
+
+        f = open(path_2, 'r')
+        content = f.read()
+        f.close()
+        print "\"svnVersion\":\"%s\"" % subversion
+        content = re.sub(regx_2, "\"svnVersion\":\"%s\"" % subversion, content)
+        # print path_2
+        f = open(path_2, 'w')
+        # print content
+        f.write(content)
+        f.close()
+
         # 上传ftp
-        upfiles = FindFiles(g_RootPath + '\\' + g_ResourcePath, upfiles, [])
-        path = g_smbAddress + "\\" + g_platform + "\\assets\\" + g_version
-        print path
-        print len(upfiles)
-        for file in upfiles:
-            # ftp_upload(file)
-            print file
-            if not os.path.exists(path):
-                os.mkdir(path)
-                pass
-            smb_upload(file, path)
+        # print g_RootPath
+        upfiles = FindFiles(g_RootPath + '/' + g_ResourcePath, upfiles, [])
+        path = g_smbAddress + "/" + g_platform + "/assets/" + g_version
+        # print path
+        if upfiles and len(upfiles) > 0:
+        	print len(upfiles)
+	        for file in upfiles:
+	            # ftp_upload(file)
+	            # print file
+	            if not os.path.exists(path):
+	                os.mkdir(path)
+	                pass
+	            smb_upload(file, path)
+        	pass
+        
     else:
         print "path is None."
     
