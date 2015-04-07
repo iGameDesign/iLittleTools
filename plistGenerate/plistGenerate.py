@@ -181,15 +181,15 @@ if __name__ == "__main__":
         files = FindFiles(g_workDir + "/autobranch", files, [".ipa"])
         if files and len(files) > 0:
             for f in files:
-                print f
+                # print f
                 pfile = f[:len(f)-len(".ipa")] + keys_postfix
                 # print(pfile)
                 if not os.path.exists(pfile):
                     # http://macbuild.funova.com/test/Bulletgirls.ipa
-                    print f
-                    print pfile
+                    # print f
+                    # print pfile
                     url = "http://macbuild.funova.com" + f[len(g_workDir):]
-                    print url
+                    # print url
                     regx = "http://macbuild.funova.com/test/Bulletgirls.ipa"
                     xml = re.sub(regx, url, g_plistTemp)
                     # print xml
@@ -198,7 +198,8 @@ if __name__ == "__main__":
                     fileobj.close()
                     pass
                 else:
-                    print("The plist is exists.")
+                    # print("The plist is exists.")
+                    pass
         # create index.htm
         files = []
         files = FindFiles(g_workDir + "/autobranch", files, [".plist", ".apk"])
@@ -242,22 +243,23 @@ if __name__ == "__main__":
                         fileobj.close()
                         pass
                     else:
-                        print("The download link is exists.")
+                        # print("The download link is exists.")
+                        pass
 
         # create plist
         files = []
         files = FindFiles(g_workDir + "/packagebranches", files, [".ipa"])
         if files and len(files) > 0:
             for f in files:
-                print f
+                # print f
                 pfile = f[:len(f)-len(".ipa")] + keys_postfix
                 # print(pfile)
                 if not os.path.exists(pfile):
                     # http://macbuild.funova.com/test/Bulletgirls.ipa
-                    print f
-                    print pfile
+                    # print f
+                    # print pfile
                     url = "http://macbuild.funova.com" + f[len(g_workDir):]
-                    print url
+                    # print url
                     regx = "http://macbuild.funova.com/test/Bulletgirls.ipa"
                     xml = re.sub(regx, url, g_plistTemp)
                     # print xml
@@ -266,7 +268,8 @@ if __name__ == "__main__":
                     fileobj.close()
                     pass
                 else:
-                    print("The plist is exists.")
+                    # print("The plist is exists.")
+                    pass
         # create index.htm
         files = []
         files = FindFiles(g_workDir + "/packagebranches", files, [".plist", ".apk"])
@@ -320,7 +323,8 @@ if __name__ == "__main__":
                         fileobj.close()
                         pass
                     else:
-                        print("The download link is exists.")
+                        # print("The download link is exists.")
+                        pass
 
         # create index.htm for folder
         folder = []
@@ -329,7 +333,7 @@ if __name__ == "__main__":
             # g_pathTemp  <replace/>  g_linkPath
             links = []
             for f in folder:
-                print f
+                # print f
                 p, n = os.path.split(f)
                 temp = g_autobranchPath % (n, n)
                 links.append(temp)
@@ -349,7 +353,7 @@ if __name__ == "__main__":
             # g_pathTemp  <replace/>  g_linkPath
             links = []
             for f in folder:
-                print f
+                # print f
                 p, n = os.path.split(f)
                 temp = g_packagebranchesPath % (n, n)
                 links.append(temp)
@@ -368,15 +372,15 @@ if __name__ == "__main__":
         files = FindFiles(g_workDir + "/package/Manualbuild", files, [".ipa"])
         if files and len(files) > 0:
             for f in files:
-                print f
+                # print f
                 pfile = f[:len(f)-len(".ipa")] + keys_postfix
                 # print(pfile)
                 if not os.path.exists(pfile):
                     # http://macbuild.funova.com/test/Bulletgirls.ipa
-                    print f
-                    print pfile
+                    # print f
+                    # print pfile
                     url = "http://macbuild.funova.com" + f[len(g_workDir):]
-                    print url
+                    # print url
                     regx = "http://macbuild.funova.com/test/Bulletgirls.ipa"
                     xml = re.sub(regx, url, g_plistTemp)
                     # print xml
@@ -385,7 +389,8 @@ if __name__ == "__main__":
                     fileobj.close()
                     pass
                 else:
-                    print("The plist is exists.")
+                    # print("The plist is exists.")
+                    pass
         # create index.htm
         files = []
         files = FindFiles(g_workDir + "/package/Manualbuild", files, [".plist", ".apk"])
@@ -439,7 +444,8 @@ if __name__ == "__main__":
                         fileobj.close()
                         pass
                     else:
-                        print("The download link is exists.")
+                        # print("The download link is exists.")
+                        pass
 
     else:
         print "path is None."

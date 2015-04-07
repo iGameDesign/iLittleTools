@@ -1,0 +1,1 @@
+pyinstaller QHMServerTest.py

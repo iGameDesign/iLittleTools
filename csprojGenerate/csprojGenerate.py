@@ -29,7 +29,6 @@ g_DstProjTemp   = r"Assembly-CSharp-vs.csproj.template"
 g_Keywords      = r"Assets\scripts"
 g_LogFile       = r"logs\csprojGenerate.log"
 
-
 def FindFiles(dir, out, filter):
     if not os.path.exists(dir):
         print "path not exists."
@@ -51,6 +50,7 @@ def FindFiles(dir, out, filter):
 
 # 对于源工程文件，删掉所有的脚本(Assets\scripts)
 def DelScripts(projfile):
+    print 'projfile: ' + projfile
     regx = re.compile(r"<Compile Include=\"(Assets\\scripts\\.+\.cs)\" />")
 
     scriptscount = 0
@@ -59,6 +59,9 @@ def DelScripts(projfile):
         for index in xrange(0, len(lines) - 1):
             # print lines[index]
             if len(lines[index].replace(" ", "").replace("\n", "").replace("\r", "")) > 0:
+                if 'Assets\\scripts\\' in lines[index]:
+                    # print(lines[index])
+                    pass
                 # print(lines[index])
                 results = re.findall(regx, lines[index])
                 if results and len(results) > 0:
@@ -77,7 +80,7 @@ def DelScripts(projfile):
                     lines[index] = lines[index].replace(';UNITY_EDITOR_WIN', '')
                 pass
         pass
-    print "Total scripts count: %s"  % scriptscount
+    print "Total delete scripts count: %s"  % scriptscount
     # print projfile[:-len(".template")]
     # open(projfile[:-len(".template")], 'w').writelines(lines)
     print projfile
@@ -93,7 +96,7 @@ def AddScripts(projfile, scripts):
     for script in scripts:
         path = script[len(g_RootPath + g_DstPath) + 2:]
         line = linetemp % path
-        print line
+        # print line
         lines.append(line)
 
     content = open(projfile, 'r').read()
