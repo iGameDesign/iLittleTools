@@ -1,0 +1,1 @@
+pyinstaller csprojGenerate_mono.py
