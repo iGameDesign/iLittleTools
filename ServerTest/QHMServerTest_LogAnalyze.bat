@@ -1,0 +1,1 @@
+python QHMServerTest_LogAnalyze.py -r "e:\WorkSpace\gunsoul_mobile\game\project\server"

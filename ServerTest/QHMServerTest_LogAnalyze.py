@@ -1,16 +1,13 @@
-#coding=utf8
+#coding=gb18030
 
 '''
 Copyright(c) Funova
 
-FileName        : QHMServerTest_LogAnalyze.py
+FileName        : QHMServerLogAnalyst.py
 Creator         : pengpeng
 Date            : 2014-12-25 11:11
 Comment         : 
 ModifyHistory   :
-    1. svn up
-    2. modify server\Config\config_operator.lua
-    3. run the Robot
 
 '''
 
@@ -23,38 +20,12 @@ import re
 import string
 import csv
 import argparse
-import subprocess
 
-g_TestSuite     = r"QHMServerTest_LogAnalyze"
+g_TestSuite     = r"QHMServerLogAnalyst"
 g_RootPath      = r"E:\WorkSpace\gunsoul_mobile\game\project\server"
-g_LogPath       = r"log"
-g_LogFile       = r"logs/QHMServerTest_LogAnalyze.log"
-g_ConfigFile    = r'Config/config_operator.lua'
-
-g_RobotIndex    = 1
-g_RobotCount    = 20
-g_ServerID      = 32
-g_WorldIP       = '192.168.1.132'
-
-g_strRepl       = '''
-Center.open             = false 
-Logic.open              = false
-World.open              = false
-Battle.open             = false
-Cross.open              = false
-Client.open             = false
-Gateway.open            = false
-
-Client.open             = true
-
--- robot client config
-Client.open             = true
-client_robot.userExt    = {%s, %s}
-client_robot.serverId   = %s
-
---cfg.clientRobot.worldip = '123.59.33.192'
-cfg.clientRobot.worldip = '%s'
-'''
+g_LogPath       = r"Log"
+g_LogFile       = r"logs/QHMServerLogAnalyst.log"
+g_JUnitLog      = r"logs/UIMetaChecker.xml"
 
 def FindFiles(dir, out, filter):
     if not os.path.exists(dir):
@@ -83,6 +54,9 @@ def Analysis(filename):
     
     bRet = True
     szMsg = ""
+    szClassName = ""
+    szName = ""
+    szJMsg = ""
     if not os.path.exists(filename):
         bRet = False
         szMsg = ("%s: %s") % (filename, " -- not exists.")
@@ -93,37 +67,48 @@ def Analysis(filename):
         fileobj.close()
 
         # prepare regx
-        # regx1 = re.compile(r"\[\d+-\d+:\d+:\d+ ERROR] (\.+) \[\d+-\d+:\d+:\d+ \w+]")
-        regx1 = re.compile(r"(\[\d+-\d+:\d+:\d+ ERROR]\s*.*)\s*")
+        # regx1 = re.compile(r"(\[\d+-\d+:\d+:\d+ ERROR]\s*.*)\s*")
+        # regx1 = re.compile(r"TestCaseEnd, TestCaseResult: False, Fail/All \((\d+)/(\d+)\)")
+        regx1 = re.compile(r"TestCaseEnd, TestCaseResult: False, Fail/All \(\d+/\d+\)")
+        regx2 = re.compile(r"TestCaseName: (.*)")
+        regx3 = re.compile(r"==========  \[  (.*)  \] finish actions ==========")
+
+        results2 = re.findall(regx2, content)
+        if results2 and len(results2) > 0:
+            print len(results2)
+            print results2
+            szClassName = results2[0]
+
+        results3 = re.findall(regx3, content)
+        if results3 and len(results3) > 0:
+            print len(results3)
+            print results3
+            szName = results3[0]
+
         results = re.findall(regx1, content)
         if results and len(results) > 0:
-            # print len(results)
-            # print results
+            print len(results)
+            print results
             bRet = False
-            szMsg = string.join(results, "\n")
+            # szMsg = string.join(results[0], "\n")
+            szMsg = results[0]
 
-        return bRet, szMsg
+            if bRet:
+                szJMsg = ('''
+                <testcase classname="%s" result="%s" name="%s"/>
+                ''') % (szClassName, "Passed", szName)
+                pass
+            else:
+                szJMsg = ('''
+                <testcase classname="%s" result="%s" name="%s">
+                    <failure type="Error">
+                        %s
+                    </failure>
+                </testcase>
+                ''') % (szClassName, "Failed", szName, szMsg)
+
+        return bRet, szMsg, szJMsg
     pass
-
-def doCMD(arg):
-    '''
-    Run a shell command.
-    '''
-    print "==>", arg
-    cmd = subprocess.Popen(arg, shell = True, stdout = subprocess.PIPE)
-    temp = cmd.communicate()
-    # print temp
-    temp = temp[0]
-    regx = re.compile(r": (\d+)")
-    results = re.findall(regx, temp)
-    if len(results) > 2:
-        return results[1]
-    else:
-        return Nil
-    pass
-
-def RunRobot():
-    return doCMD("svn info %s" % (g_RootPath))
 
 if __name__ == "__main__":
     import time
@@ -132,39 +117,56 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-r')
-    parser.add_argument('-robotindex')
-    parser.add_argument('-robotcount')
-    parser.add_argument('-serverid')
-    parser.add_argument('-worldip')
     parser.print_help()
     args = parser.parse_known_args()[0]
 
     if args.r:
-        g_RootPath      = args.r
-        g_RobotIndex    = args.robotindex
-        g_RobotCount    = args.robotcount
-        g_ServerID      = args.serverid
-        g_WorldIP       = args.worldip
+        g_RootPath = args.r
+        g_LogPath = g_RootPath + os.sep + g_LogPath
+        print g_LogPath
 
-        # modify config file
-        g_ConfigFile = g_RootPath + os.sep + g_ConfigFile
-        print g_ConfigFile
-        content = open(g_ConfigFile, 'r').read()
-        content = content + g_strRepl % (g_RobotIndex, g_RobotCount, g_ServerID, g_WorldIP)
-        print content
-        open(g_ConfigFile, 'w').write(content)
+        bResult = True
+        szResMsg = ""
+        str1 = ""
+        szJUnitMsg = ""
+        # logfileobj = open(g_RootPath + os.sep + g_LogFile, "w")
+        junitfileobj = open(g_RootPath + os.sep + g_JUnitLog, "w")
 
-        # run the Robot
-        # cmd = subprocess.Popen('cd ' + g_RootPath, shell = True, stdout = subprocess.PIPE)
-        # temp = cmd.communicate()
-        # cmd = subprocess.Popen('dir ', shell = True, stdout = subprocess.PIPE)
-        # temp = cmd.communicate()
-        # os.system('%s\\NXServer_x64_Debug.exe %s\\Lua main %s\\Log NXServer 1' % (g_RootPath, g_RootPath, g_RootPath))
-        # os.system('NXServer_x64_Debug.exe Lua main Log NXServer 1')
-        # cmd = subprocess.Popen('NXServer_x64_Debug.exe Lua main Log NXServer 1', shell = True, stdout = subprocess.PIPE)
-        # print 'Running...'
+        files = []
+        files = FindFiles(g_LogPath, files, [".log"])
+        print len(files)
+        if files and len(files) > 0:
+            for f in files:
+                print f
+                bRet, szMsg, szJMsg = Analysis(f)
+                if not bRet and szJMsg != "":
+                    bResult = False
+                    szResMsg = szResMsg + f + "\n" + szMsg + "\n\n"
+
+                    szJUnitMsg = szJUnitMsg + szJMsg
+                else:
+                    szJUnitMsg = szJUnitMsg + szJMsg
+                    pass
+            if bResult:
+                print "Success."
+                str1 = "Passed"
+            else:
+                print szResMsg
+                str1 = "Failed"
+
+        # logfileobj.write(szResMsg)
+        # logfileobj.close()
 
         endTime = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
+
+        junitfileobj.write(r'<?xml version="1.0" encoding="utf-8"?>')
+        junitfileobj.write(r'<testsuite classname="%s" name="%s" result="%s" startTime="%s" endTime="%s" errorInfo="">' 
+            % ("Resource Check", g_TestSuite, str1, startTime, endTime))
+        junitfileobj.write(r'<testsuite>')
+        junitfileobj.write(szJUnitMsg)
+        junitfileobj.write(r'</testsuite>')
+        junitfileobj.write(r'</testsuite>')
+        junitfileobj.close()
     else:
         print "path is None."
     
